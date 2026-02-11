@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/giga_words/sw.js', { scope: '/giga_words/' })})}
