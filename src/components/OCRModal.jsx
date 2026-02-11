@@ -40,7 +40,12 @@ function OCRModal({ onClose, onSave }) {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass"
-                style={{ width: '100%', maxWidth: '500px', padding: '32px', background: 'var(--surface)' }}
+                style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    padding: window.innerWidth < 768 ? '20px' : '32px',
+                    background: 'var(--surface)'
+                }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <h2 style={{ fontSize: '1.5rem' }}>Analyze Screenshot</h2>

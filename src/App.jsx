@@ -124,9 +124,6 @@ function App() {
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <Plus size={20} /> Add Word
           </button>
-          <button className="btn glass" onClick={() => setShowOCR(true)}>
-            <ImageIcon size={20} /> OCR
-          </button>
         </div>
       </div>
 
@@ -170,18 +167,70 @@ function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="glass"
-              style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              style={{
+                padding: '24px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '16px',
+                position: 'relative'
+              }}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>{item.word}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                  <h3 style={{ fontSize: '2rem', fontWeight: '700' }}>{item.word}</h3>
                   <FamiliarityStars level={item.familiarity} />
                 </div>
 
+                {/* Repositioned Edit Button to the Card Corner */}
+                <button
+                  className="btn glass"
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    padding: '8px',
+                    minWidth: 'auto',
+                    borderRadius: '50%',
+                    background: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    color: 'var(--text-muted)'
+                  }}
+                  onClick={() => setEditingWord(item)}
+                >
+                  <Sparkles size={20} />
+                </button>
+
                 {item.phonetics && (item.phonetics.dj || item.phonetics.kk) && (
-                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                    {item.phonetics.dj && <span>DJ: [{item.phonetics.dj}]</span>}
-                    {item.phonetics.kk && <span>KK: /{item.phonetics.kk}/</span>}
+                  <div style={{ display: 'flex', gap: '20px', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', alignItems: 'center' }}>
+                    {item.phonetics.dj && (
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                        onClick={() => handleSpeak(item.id, item.word, 'en-GB')}
+                      >
+                        <img
+                          src="https://flagcdn.com/w40/gb.png"
+                          alt="UK Flag"
+                          style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <span>DJ: [{item.phonetics.dj}]</span>
+                      </div>
+                    )}
+                    {item.phonetics.kk && (
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                        onClick={() => handleSpeak(item.id, item.word, 'en-US')}
+                      >
+                        <img
+                          src="https://flagcdn.com/w40/us.png"
+                          alt="US Flag"
+                          style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <span>KK: /{item.phonetics.kk}/</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -201,7 +250,14 @@ function App() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                <div style={{
+                  margin: '12px 0 8px 0',
+                  height: '1px',
+                  background: 'rgba(0,0,0,0.15)',
+                  width: '100%'
+                }} />
+
+                <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   <span>Views: {item.viewCount || 0}</span>
                   <span>Tests: {item.testCount || 0}</span>
                   {item.analysis && (
@@ -234,27 +290,8 @@ function App() {
                   )}
                 </AnimatePresence>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn glass" style={{ padding: '10px' }} onClick={() => handleSpeak(item.id, item.word, 'en-US')}>
-                  <Volume2 size={18} /> US
-                </button>
-                <button className="btn glass" style={{ padding: '10px' }} onClick={() => handleSpeak(item.id, item.word, 'en-GB')}>
-                  <Volume2 size={18} /> UK
-                </button>
-                <button
-                  className="btn glass"
-                  style={{ padding: '8px' }}
-                  onClick={() => setEditingWord(item)}
-                >
-                  <Sparkles size={18} /> Edit
-                </button>
-                <button
-                  className="btn glass"
-                  style={{ padding: '10px', color: 'var(--accent)' }}
-                  onClick={() => handleDelete(item.id)}
-                >
-                  <Trash2 size={18} />
-                </button>
+              <div style={{ display: 'none' }}>
+                {/* Fixed action buttons removed. Edit is now at top-right, Delete is inside Edit modal. */}
               </div>
             </motion.div>
           ))}
@@ -271,6 +308,7 @@ function App() {
         <WordModal
           onClose={() => { setShowModal(false); setEditingWord(null); }}
           onSave={handleSave}
+          onDelete={handleDelete}
           initialData={editingWord}
         />
       )}

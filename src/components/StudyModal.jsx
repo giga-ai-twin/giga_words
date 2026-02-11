@@ -43,8 +43,8 @@ function StudyModal({ words, onClose, onRefresh }) {
                 </button>
             </div>
 
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-                <div style={{ width: '100%', maxWidth: '400px', height: '500px', perspective: '1000px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: window.innerWidth < 768 ? '16px' : '24px' }}>
+                <div style={{ width: '100%', maxWidth: '400px', height: window.innerWidth < 768 ? '400px' : '500px', perspective: '1000px' }}>
                     <motion.div
                         animate={{ rotateY: isFlipped ? 180 : 0 }}
                         transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
@@ -55,9 +55,9 @@ function StudyModal({ words, onClose, onRefresh }) {
                         <div className="glass" style={{
                             position: 'absolute', inset: 0,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            backfaceVisibility: 'hidden', padding: '32px', textAlign: 'center'
+                            backfaceVisibility: 'hidden', padding: window.innerWidth < 768 ? '20px' : '32px', textAlign: 'center'
                         }}>
-                            <h1 style={{ fontSize: '3rem', marginBottom: '8px' }}>{currentWord.word}</h1>
+                            <h1 style={{ fontSize: window.innerWidth < 768 ? '2.25rem' : '3rem', marginBottom: '8px' }}>{currentWord.word}</h1>
                             {currentWord.phonetics && (
                                 <div style={{ display: 'flex', gap: '12px', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
                                     <span>DJ: {currentWord.phonetics.dj}</span>
@@ -79,10 +79,10 @@ function StudyModal({ words, onClose, onRefresh }) {
                         <div className="glass" style={{
                             position: 'absolute', inset: 0,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', padding: '32px', textAlign: 'center',
+                            backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', padding: window.innerWidth < 768 ? '20px' : '32px', textAlign: 'center',
                             background: 'rgba(26, 115, 232, 0.05)'
                         }}>
-                            <h2 style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>{currentWord.translation}</h2>
+                            <h2 style={{ fontSize: window.innerWidth < 768 ? '2rem' : '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>{currentWord.translation}</h2>
                             <p style={{ color: 'var(--secondary)', fontWeight: '600', marginBottom: '16px' }}>
                                 {currentWord.analysis?.find(p => p.type.includes('常用'))?.type || '常用'}
                             </p>
@@ -114,15 +114,15 @@ function StudyModal({ words, onClose, onRefresh }) {
                 </div>
             </div>
 
-            <div style={{ padding: '48px', display: 'flex', justifyContent: 'center', gap: '24px' }}>
-                <button className="btn glass" style={{ padding: '16px' }} onClick={handlePrev}>
-                    <ChevronLeft size={32} />
+            <div style={{ padding: window.innerWidth < 768 ? '24px' : '48px', display: 'flex', justifyContent: 'center', gap: '24px' }}>
+                <button className="btn glass" style={{ padding: window.innerWidth < 768 ? '12px' : '16px' }} onClick={handlePrev}>
+                    <ChevronLeft size={window.innerWidth < 768 ? 24 : 32} />
                 </button>
-                <button className="btn glass" style={{ padding: '16px' }} onClick={handleFlip}>
-                    <RotateCcw size={32} />
+                <button className="btn glass" style={{ padding: window.innerWidth < 768 ? '12px' : '16px' }} onClick={handleFlip}>
+                    <RotateCcw size={window.innerWidth < 768 ? 24 : 32} />
                 </button>
-                <button className="btn glass" style={{ padding: '16px' }} onClick={handleNext}>
-                    <ChevronRight size={32} />
+                <button className="btn glass" style={{ padding: window.innerWidth < 768 ? '12px' : '16px' }} onClick={handleNext}>
+                    <ChevronRight size={window.innerWidth < 768 ? 24 : 32} />
                 </button>
             </div>
         </div>

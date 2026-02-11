@@ -67,7 +67,14 @@ function WordModal({ onClose, onSave, initialData }) {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass"
-                style={{ width: '100%', maxWidth: '600px', padding: '32px', background: 'var(--surface)', maxHeight: '90vh', overflowY: 'auto' }}
+                style={{
+                    width: '100%',
+                    maxWidth: '600px',
+                    padding: window.innerWidth < 768 ? '20px' : '32px',
+                    background: 'var(--surface)',
+                    maxHeight: '90vh',
+                    overflowY: 'auto'
+                }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <h2 style={{ fontSize: '1.5rem' }}>{initialData ? 'Edit Word Details' : 'Add New Word'}</h2>
@@ -77,8 +84,8 @@ function WordModal({ onClose, onSave, initialData }) {
                 </div>
 
                 <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-                        <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 200px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>English Word</label>
                             <input
                                 autoFocus
@@ -226,9 +233,26 @@ function WordModal({ onClose, onSave, initialData }) {
                         />
                     </div>
 
-                    <button type="submit" className="btn btn-primary" style={{ marginTop: '12px', height: '50px', fontSize: '1.1rem' }}>
-                        <Save size={20} /> {initialData ? 'Update Word' : 'Save Word'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                        <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '50px', fontSize: '1.1rem' }}>
+                            <Save size={20} /> {initialData ? 'Update Word' : 'Save Word'}
+                        </button>
+                        {initialData && (
+                            <button
+                                type="button"
+                                className="btn glass"
+                                style={{ color: 'var(--accent)', padding: '0 20px' }}
+                                onClick={() => {
+                                    if (window.confirm('Delete this word?')) {
+                                        onDelete(initialData.id);
+                                        onClose();
+                                    }
+                                }}
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
+                    </div>
                 </form>
             </motion.div>
         </div>
