@@ -35,7 +35,7 @@ function StudyModal({ words, onClose, onRefresh }) {
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: '#0f172a', zIndex: 2000, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--background)', zIndex: 2000, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)' }}>
                 <h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>Flashcard Study ({currentIndex + 1} / {words.length})</h2>
                 <button className="btn glass" onClick={onClose} style={{ padding: '8px' }}>
@@ -80,16 +80,25 @@ function StudyModal({ words, onClose, onRefresh }) {
                             position: 'absolute', inset: 0,
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                             backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', padding: '32px', textAlign: 'center',
-                            background: 'rgba(99, 102, 241, 0.1)'
+                            background: 'rgba(26, 115, 232, 0.05)'
                         }}>
                             <h2 style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '8px' }}>{currentWord.translation}</h2>
                             <p style={{ color: 'var(--secondary)', fontWeight: '600', marginBottom: '16px' }}>
                                 {currentWord.analysis?.find(p => p.type.includes('常用'))?.type || '常用'}
                             </p>
                             {currentWord.example && (
-                                <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '300px' }}>
-                                    "{currentWord.example}"
-                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+                                    <button
+                                        className="btn glass"
+                                        style={{ padding: '6px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '50%' }}
+                                        onClick={(e) => { e.stopPropagation(); speak(currentWord.example, 'en-US'); }}
+                                    >
+                                        <Volume2 size={16} />
+                                    </button>
+                                    <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '300px' }}>
+                                        "{currentWord.example}"
+                                    </p>
+                                </div>
                             )}
                             <div style={{ position: 'absolute', bottom: '24px', width: '100%', display: 'flex', justifyContent: 'center' }}>
                                 <button

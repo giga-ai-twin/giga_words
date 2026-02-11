@@ -20,11 +20,12 @@ function WordModal({ onClose, onSave, initialData }) {
             setAiAnalysis(result.pos);
             setPhonetics(result.phonetics);
             if (result.pos.length > 0) {
-                setTranslation(result.pos[0].translation);
+                setTranslation(`${result.pos[0].type} ${result.pos[0].translation}`);
                 setExample(result.pos[0].example);
             }
         } catch (e) {
-            alert("Translation failed.");
+            console.error("WordModal handleTranslate Error:", e);
+            alert(`Translation failed: ${e.message}. Check console for details.`);
         } finally {
             setLoading(false);
         }
@@ -66,7 +67,7 @@ function WordModal({ onClose, onSave, initialData }) {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass"
-                style={{ width: '100%', maxWidth: '600px', padding: '32px', background: '#1e293b', maxHeight: '90vh', overflowY: 'auto' }}
+                style={{ width: '100%', maxWidth: '600px', padding: '32px', background: 'var(--surface)', maxHeight: '90vh', overflowY: 'auto' }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <h2 style={{ fontSize: '1.5rem' }}>{initialData ? 'Edit Word Details' : 'Add New Word'}</h2>
@@ -132,7 +133,7 @@ function WordModal({ onClose, onSave, initialData }) {
                     </div>
 
                     {aiAnalysis && (
-                        <div className="glass" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="glass" style={{ padding: '16px', background: '#f8f9fa', boxShadow: 'none' }}>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Analysis & Parts of Speech</p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {aiAnalysis.map((item, idx) => (
@@ -140,30 +141,45 @@ function WordModal({ onClose, onSave, initialData }) {
                                         key={idx}
                                         className="glass"
                                         style={{
-                                            padding: '10px',
+                                            padding: '12px',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             gap: '4px',
                                             cursor: 'pointer',
-                                            border: translation === item.translation ? '1px solid var(--primary)' : '1px solid transparent',
-                                            background: translation === item.translation ? 'rgba(99, 102, 241, 0.1)' : 'transparent'
+                                            border: translation === (`${item.type} ${item.translation}`) ? '1px solid var(--primary)' : '1px solid var(--glass-border)',
+                                            background: translation === (`${item.type} ${item.translation}`) ? 'rgba(26, 115, 232, 0.05)' : 'transparent',
+                                            borderRadius: '8px'
                                         }}
                                         onClick={() => {
-                                            setTranslation(item.translation);
+                                            setTranslation(`${item.type} ${item.translation}`);
                                             setExample(item.example);
                                         }}
                                     >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{item.type}</span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); setAiAnalysis(aiAnalysis.filter((_, i) => i !== idx)); }}
-                                                style={{ background: 'none', border: 'none', color: '#ef4444', padding: 0 }}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn glass"
+                                                    style={{ padding: '2px 8px', fontSize: '0.7rem', color: 'var(--secondary)', borderColor: 'var(--secondary)' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setTranslation(`${item.type} ${item.translation}`);
+                                                        setExample(item.example);
+                                                    }}
+                                                >
+                                                    Select
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setAiAnalysis(aiAnalysis.filter((_, i) => i !== idx)); }}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', padding: 0 }}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '0.9rem' }}>{item.translation}</div>
+                                        <div style={{ fontSize: '0.9rem', marginTop: '4px' }}>{item.translation}</div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>{item.example}</div>
                                     </div>
                                 ))}

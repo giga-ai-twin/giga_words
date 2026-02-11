@@ -35,12 +35,12 @@ function OCRModal({ onClose, onSave }) {
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass"
-                style={{ width: '100%', maxWidth: '500px', padding: '32px', background: '#1e293b' }}
+                style={{ width: '100%', maxWidth: '500px', padding: '32px', background: 'var(--surface)' }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <h2 style={{ fontSize: '1.5rem' }}>Analyze Screenshot</h2>
@@ -70,10 +70,11 @@ function OCRModal({ onClose, onSave }) {
                                 padding: '48px',
                                 textAlign: 'center',
                                 cursor: 'pointer',
-                                transition: 'background 0.2s'
+                                transition: 'background 0.2s',
+                                background: '#f8f9fa'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#f1f3f4'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#f8f9fa'}
                         >
                             <Upload size={48} style={{ color: 'var(--primary)', marginBottom: '16px' }} />
                             <p style={{ color: 'var(--text-muted)' }}>Click to upload or drag screenshot</p>
@@ -95,7 +96,7 @@ function OCRModal({ onClose, onSave }) {
                     </div>
                 ) : (
                     <div>
-                        <div className="glass" style={{ padding: '20px', marginBottom: '24px', background: 'rgba(99, 102, 241, 0.1)' }}>
+                        <div className="glass" style={{ padding: '20px', marginBottom: '24px', background: 'rgba(26, 115, 232, 0.05)', boxShadow: 'none' }}>
                             <h3 style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '4px' }}>{analysis.word}</h3>
                             <p style={{ fontWeight: '600', marginBottom: '12px' }}>{analysis.translation}</p>
                             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>"{analysis.example}"</p>

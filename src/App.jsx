@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Book, Image as ImageIcon, Volume2, Trash2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAllWords, addWord, deleteWord, incrementView, updateWord } from './services/db';
+import { getAllWords, addWord, deleteWord, incrementView, updateWord, migrateLocalToRemote } from './services/db';
+import { isRemoteActive } from './services/supabase';
 import { speak } from './services/speech';
 import WordModal from './components/WordModal';
 import OCRModal from './components/OCRModal';
@@ -18,7 +19,7 @@ const FamiliarityStars = ({ level }) => {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: star <= level ? 'var(--secondary)' : 'rgba(255,255,255,0.1)'
+            background: star <= level ? 'var(--secondary)' : '#e8eaed'
           }}
         />
       ))}
@@ -34,6 +35,8 @@ function App() {
   const [showStudy, setShowStudy] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [editingWord, setEditingWord] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [remoteActive, setRemoteActive] = useState(isRemoteActive());
 
   useEffect(() => {
     loadWords();
@@ -62,6 +65,23 @@ function App() {
     }
   };
 
+  const handleSyncMigration = async () => {
+    if (!remoteActive) return;
+    if (confirm('Migrate your local words to Supabase Cloud? This will enable cross-device sync.')) {
+      setSyncing(true);
+      try {
+        const result = await migrateLocalToRemote();
+        alert(`Successfully migrated ${result.count} words to the cloud!`);
+        loadWords();
+      } catch (e) {
+        console.error(e);
+        alert("Migration failed: " + e.message);
+      } finally {
+        setSyncing(false);
+      }
+    }
+  };
+
   const handleSpeak = async (id, text, lang) => {
     speak(text, lang);
     await incrementView(id);
@@ -77,7 +97,27 @@ function App() {
     <div className="dashboard">
       <div className="header">
         <h1 className="title">GigaWords</h1>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {remoteActive && (
+            <div
+              title="Cloud Sync Active"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                border: '1px solid rgba(16, 185, 129, 0.2)'
+              }}
+            >
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+              Cloud Active
+            </div>
+          )}
           <button className="btn glass" onClick={() => setShowStudy(true)} disabled={words.length === 0}>
             <Book size={20} /> Study
           </button>
@@ -89,6 +129,23 @@ function App() {
           </button>
         </div>
       </div>
+
+      {remoteActive && words.length > 0 && !words[0].id.toString().includes('-') && (
+        <div className="glass" style={{ padding: '16px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderColor: 'var(--primary)' }}>
+          <div style={{ fontSize: '0.9rem' }}>
+            <span style={{ color: 'var(--primary)', fontWeight: '700' }}>Local words detected.</span> Would you like to sync them to your Supabase cloud?
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+            onClick={handleSyncMigration}
+            disabled={syncing}
+          >
+            {syncing ? <Sparkles className="animate-spin" size={16} /> : <Sparkles size={16} />}
+            Sync to Cloud
+          </button>
+        </div>
+      )}
 
       <div className="glass" style={{ padding: '24px', marginBottom: '32px' }}>
         <div style={{ position: 'relative' }}>
@@ -120,7 +177,29 @@ function App() {
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>{item.word}</h3>
                   <FamiliarityStars level={item.familiarity} />
                 </div>
-                <p style={{ color: 'var(--primary)', fontWeight: '600', marginBottom: '8px' }}>{item.translation}</p>
+
+                {item.phonetics && (item.phonetics.dj || item.phonetics.kk) && (
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    {item.phonetics.dj && <span>DJ: [{item.phonetics.dj}]</span>}
+                    {item.phonetics.kk && <span>KK: /{item.phonetics.kk}/</span>}
+                  </div>
+                )}
+
+                <p style={{ color: 'var(--primary)', fontWeight: '600', marginBottom: '4px' }}>{item.translation}</p>
+
+                {item.example && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <button
+                      className="btn glass"
+                      style={{ padding: '6px', background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '50%' }}
+                      onClick={() => handleSpeak(item.id, item.example, 'en-US')}
+                      title="Speak Example"
+                    >
+                      <Volume2 size={12} />
+                    </button>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic', flex: 1 }}>"{item.example}"</p>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
                   <span>Views: {item.viewCount || 0}</span>
@@ -143,7 +222,7 @@ function App() {
                       exit={{ opacity: 0, height: 0 }}
                       style={{ overflow: 'hidden', marginBottom: '12px' }}
                     >
-                      <div className="glass" style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', fontSize: '0.85rem' }}>
+                      <div className="glass" style={{ padding: '12px', background: '#f8f9fa', fontSize: '0.85rem', boxShadow: 'none' }}>
                         {item.analysis.map((pos, idx) => (
                           <div key={idx} style={{ marginBottom: '8px' }}>
                             <span style={{ fontWeight: '700', color: 'var(--secondary)' }}>{pos.type}</span>: {pos.translation}
@@ -154,19 +233,6 @@ function App() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {item.example && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>"{item.example}"</p>
-                    <button
-                      className="btn glass"
-                      style={{ padding: '4px', background: 'transparent', border: 'none' }}
-                      onClick={() => handleSpeak(item.id, item.example, 'en-US')}
-                    >
-                      <Volume2 size={14} />
-                    </button>
-                  </div>
-                )}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button className="btn glass" style={{ padding: '10px' }} onClick={() => handleSpeak(item.id, item.word, 'en-US')}>
@@ -184,7 +250,7 @@ function App() {
                 </button>
                 <button
                   className="btn glass"
-                  style={{ padding: '10px', color: '#f87171' }}
+                  style={{ padding: '10px', color: 'var(--accent)' }}
                   onClick={() => handleDelete(item.id)}
                 >
                   <Trash2 size={18} />
