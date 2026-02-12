@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Book, Image as ImageIcon, Volume2, Trash2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAllWords, addWord, deleteWord, incrementView, updateWord, migrateLocalToRemote } from './services/db';
+import { getWordsPaginated, addWord, deleteWord, incrementView, updateWord, migrateLocalToRemote } from './services/db';
 import { isRemoteActive } from './services/supabase';
 import { speak } from './services/speech';
 import WordModal from './components/WordModal';
@@ -35,17 +35,51 @@ function App() {
   const [showStudy, setShowStudy] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [editingWord, setEditingWord] = useState(null);
-  const [syncing, setSyncing] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [remoteActive, setRemoteActive] = useState(isRemoteActive());
 
   useEffect(() => {
-    loadWords();
+    loadWords(true);
   }, []);
 
-  const loadWords = async () => {
-    const allWords = await getAllWords();
-    setWords(allWords);
+  const loadWords = async (isReset = false) => {
+    if (loading || (!hasMore && !isReset)) return;
+    setLoading(true);
+    const targetPage = isReset ? 0 : page;
+    try {
+      const newWords = await getWordsPaginated(targetPage, 20);
+      if (newWords.length < 20) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+      if (isReset) {
+        setWords(newWords);
+        setPage(1);
+      } else {
+        setWords(prev => [...prev, ...newWords]);
+        setPage(prev => prev + 1);
+      }
+    } catch (e) {
+      console.error("loadWords error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const observer = React.useRef();
+  const lastWordElementRef = React.useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadWords();
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
 
   const handleSave = async (wordData) => {
     if (wordData.id) {
@@ -53,7 +87,7 @@ function App() {
     } else {
       await addWord(wordData);
     }
-    loadWords();
+    loadWords(true);
     setEditingWord(null);
     setShowModal(false);
   };
@@ -61,7 +95,7 @@ function App() {
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this word?')) {
       await deleteWord(id);
-      loadWords();
+      loadWords(true);
     }
   };
 
@@ -72,7 +106,7 @@ function App() {
       try {
         const result = await migrateLocalToRemote();
         alert(`Successfully migrated ${result.count} words to the cloud!`);
-        loadWords();
+        loadWords(true);
       } catch (e) {
         console.error(e);
         alert("Migration failed: " + e.message);
@@ -85,7 +119,8 @@ function App() {
   const handleSpeak = async (id, text, lang) => {
     speak(text, lang);
     await incrementView(id);
-    loadWords();
+    // Don't reload everything for just a view count increment to avoid jumping
+    setWords(prev => prev.map(w => w.id === id ? { ...w, viewCount: (w.viewCount || 0) + 1 } : w));
   };
 
   const filteredWords = words.filter(w =>
@@ -96,7 +131,12 @@ function App() {
   return (
     <div className="dashboard">
       <div className="header">
-        <h1 className="title">GigaWords</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="material-symbols-outlined gradient-text" style={{ fontSize: '2.5rem' }}>
+            g_mobiledata_badge
+          </span>
+          <h1 className="title gradient-text">GigaWords</h1>
+        </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {remoteActive && (
             <div
@@ -159,9 +199,10 @@ function App() {
 
       <div style={{ display: 'grid', gap: '16px' }}>
         <AnimatePresence>
-          {filteredWords.map((item) => (
+          {filteredWords.map((item, index) => (
             <motion.div
               key={item.id}
+              ref={index === filteredWords.length - 1 ? lastWordElementRef : null}
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -297,7 +338,13 @@ function App() {
           ))}
         </AnimatePresence>
 
-        {filteredWords.length === 0 && (
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '24px' }}>
+            <Sparkles className="animate-spin" size={24} style={{ color: 'var(--primary)' }} />
+          </div>
+        )}
+
+        {filteredWords.length === 0 && !loading && (
           <div style={{ textAlign: 'center', padding: '64px', color: 'var(--text-muted)' }}>
             No words found. Start by adding some!
           </div>

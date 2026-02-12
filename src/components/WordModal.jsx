@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Sparkles, Loader2, Check, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { translateWord } from '../services/ai';
+import { findWordByText } from '../services/db';
 
 function WordModal({ onClose, onSave, initialData }) {
     const [word, setWord] = useState(initialData?.word || '');
@@ -10,7 +11,19 @@ function WordModal({ onClose, onSave, initialData }) {
     const [phonetics, setPhonetics] = useState(initialData?.phonetics || { dj: '', kk: '' });
     const [images, setImages] = useState(initialData?.images || []);
     const [aiAnalysis, setAiAnalysis] = useState(initialData?.analysis || null);
+    const [spellSuggestion, setSpellSuggestion] = useState(null);
+    const [existsWarning, setExistsWarning] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const checkExisting = async () => {
+            if (!word || initialData) return; // Don't check if empty or if we are editing existing
+            const found = await findWordByText(word);
+            setExistsWarning(!!found);
+        };
+        const timer = setTimeout(checkExisting, 500);
+        return () => clearTimeout(timer);
+    }, [word, initialData]);
 
     const handleTranslate = async () => {
         if (!word) return;
@@ -19,6 +32,13 @@ function WordModal({ onClose, onSave, initialData }) {
             const result = await translateWord(word);
             setAiAnalysis(result.pos);
             setPhonetics(result.phonetics);
+
+            if (result.isMisspelled && result.didYouMean) {
+                setSpellSuggestion(result.didYouMean);
+            } else {
+                setSpellSuggestion(null);
+            }
+
             if (result.pos.length > 0) {
                 setTranslation(`${result.pos[0].type} ${result.pos[0].translation}`);
                 setExample(result.pos[0].example);
@@ -95,6 +115,15 @@ function WordModal({ onClose, onSave, initialData }) {
                                 onChange={(e) => setWord(e.target.value)}
                                 placeholder="e.g. Resilience"
                             />
+                            {existsWarning && (
+                                <motion.p
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', fontWeight: '600' }}
+                                >
+                                    ⚠️ This word is already in your list!
+                                </motion.p>
+                            )}
                         </div>
                         <button
                             type="button"
@@ -107,6 +136,43 @@ function WordModal({ onClose, onSave, initialData }) {
                             AI Analyze
                         </button>
                     </div>
+
+                    {spellSuggestion && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="glass"
+                            style={{
+                                padding: '12px',
+                                background: 'rgba(239, 68, 68, 0.05)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                            }}
+                        >
+                            <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>Did you mean:</span>
+                            <button
+                                type="button"
+                                className="btn glass"
+                                style={{
+                                    padding: '4px 12px',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--primary)',
+                                    borderColor: 'var(--primary)',
+                                    background: 'white'
+                                }}
+                                onClick={() => {
+                                    setWord(spellSuggestion);
+                                    setSpellSuggestion(null);
+                                    // Re-trigger analysis with the correct word
+                                    setTimeout(() => handleTranslate(), 0);
+                                }}
+                            >
+                                {spellSuggestion}
+                            </button>
+                        </motion.div>
+                    )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div>

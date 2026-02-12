@@ -81,17 +81,17 @@ export const addWord = async (wordData) => {
 };
 
 export const updateWord = async (id, updates) => {
+  const finalUpdates = { ...updates, timestamp: Date.now() };
   if (isRemoteActive()) {
     const { error } = await supabase
       .from('words')
-      .update(toSupabase(updates))
+      .update(toSupabase(finalUpdates))
       .eq('id', id);
     if (error) {
-      // If it's a UUID error, maybe it's still using numeric IDs from Dexie
       console.warn("Supabase update failed, checking if sync needed:", error);
     }
   }
-  return await db.words.update(id, updates);
+  return await db.words.update(id, finalUpdates);
 };
 
 export const incrementView = async (id) => {
@@ -143,6 +143,32 @@ export const getAllWords = async () => {
     }
   }
   return await db.words.orderBy('timestamp').reverse().toArray();
+};
+
+export const findWordByText = async (wordText) => {
+  if (isRemoteActive()) {
+    const { data, error } = await supabase
+      .from('words')
+      .select('id, word')
+      .eq('word', wordText)
+      .maybeSingle();
+    if (data) return fromSupabase(data);
+  }
+  return await db.words.where('word').equalsIgnoreCase(wordText).first();
+};
+
+export const getWordsPaginated = async (page = 0, pageSize = 20) => {
+  const offset = page * pageSize;
+  if (isRemoteActive()) {
+    const { data, error } = await supabase
+      .from('words')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    return data.map(fromSupabase);
+  }
+  return await db.words.orderBy('timestamp').reverse().offset(offset).limit(pageSize).toArray();
 };
 
 export const deleteWord = async (id) => {

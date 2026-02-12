@@ -13,6 +13,8 @@ export const translateWord = async (word) => {
   Provide the result in a valid JSON format with the following structure:
   {
     "word": "${word}",
+    "isMisspelled": false,
+    "didYouMean": "",
     "phonetics": { "dj": "/.../", "kk": "[...]" },
     "pos": [
       { "type": "常用 (n.)", "translation": "中文翻譯", "example": "English example sentence" },
@@ -26,7 +28,8 @@ export const translateWord = async (word) => {
   2. The POS list must categorize items as "常用" or "不常用".
   3. Ensure all translations are in Traditional Chinese (TW).
   4. The primary "translation" field MUST include the part of speech prefix in parentheses, e.g., "(n.) 翻譯" or "(v.) 翻譯".
-  5. Return ONLY the JSON object, no markdown blocks.`;
+  5. Return ONLY the JSON object, no markdown blocks.
+  6. IMPORTANT: Check if the word "${word}" has any spelling mistakes. If it does, set "isMisspelled" to true and provide the correct word in "didYouMean".`;
 
     try {
         const result = await model.generateContent(prompt);
@@ -64,6 +67,8 @@ export const analyzeScreenshot = async (base64Image, targetWord) => {
   Provide the result in a valid JSON format:
   {
     "word": "The word found",
+    "isMisspelled": false,
+    "didYouMean": "",
     "phonetics": { "dj": "/.../", "kk": "[...]" },
     "translation": "(pos.) Traditional Chinese translation",
     "example": "English example sentence based on the image context",
@@ -75,7 +80,8 @@ export const analyzeScreenshot = async (base64Image, targetWord) => {
   Requirements:
   1. Return ONLY the JSON, no markdown.
   2. The "translation" field MUST include the part of speech prefix in parentheses, e.g., "(adj.) 翻譯".
-  3. Maintain consistency with the POS structure used in translateWord.`;
+  3. Maintain consistency with the POS structure used in translateWord.
+  4. If the target word "${targetWord || ''}" is misspelled, set "isMisspelled" to true and "didYouMean" to the correction.`;
 
     try {
         const result = await model.generateContent([prompt, inlineData]);

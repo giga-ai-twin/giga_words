@@ -113,11 +113,20 @@ body {
   }
 }
 
+.gradient-text {
+  background: linear-gradient(to right, #4285f4, #9b72cb, #d96570);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
 .title {
-  font-size: 1.75rem;
-  font-weight: 500;
-  color: var(--primary);
-  letter-spacing: -0.5px;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
